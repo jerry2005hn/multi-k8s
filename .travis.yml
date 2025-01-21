@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t jrbsm/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true jrbsm/react-test npm test
+
+after_success:
+  - docker build -t jrbsm/multi-client ./client
+  - docker build -t jrbsm/multi-nginx ./nginx
+  - docker build -t jrbsm/multi-server ./server
+  - docker build -t jrbsm/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push jrbsm/multi-client
+  - docker push jrbsm/multi-nginx
+  - docker push jrbsm/multi-server
+  - docker push jrbsm/multi-worker
